@@ -457,8 +457,18 @@ def under_excluded(path):
 
 
 def walk_user_tree(root):
-    """os.walk with vendor dirs and both config trees pruned."""
+    """os.walk with vendor dirs and both config trees pruned.
+
+    The check is on `dirpath`, not only on the children, because a root is scanned
+    as given: `~/.claude` is itself a recorded project on any machine where Claude
+    Code has been run from there, and pruning only its children would still offer a
+    symlink beside `~/.claude/CLAUDE.md` — inside the tree this tool treats as
+    read-only.
+    """
     for dirpath, dirnames, filenames in os.walk(root):
+        if under_excluded(dirpath):
+            dirnames[:] = []
+            continue
         dirnames[:] = [
             d for d in dirnames
             if d not in SKIP_DIRS

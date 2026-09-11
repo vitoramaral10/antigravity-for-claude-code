@@ -322,6 +322,19 @@ if has "not-a-repo" "$OUT" && has "$H/notes" "$OUT" && [ ! -e "$H/notes/AGENTS.m
 else bad "non-repo CLAUDE.md silently dropped, or symlinked anyway"; fi
 rm -rf "$H/AppData" "$H/go" "$H/notes" "$REPO/node_modules"
 
+# --- an excluded root passed in as a root is still excluded ------------------
+# ~/.claude is a recorded project on any machine Claude Code has been run from ~,
+# and it is often a git repo of its own, so the repo rule alone would let it in.
+# Pruning only the children of a root would still offer a symlink beside its own
+# CLAUDE.md, inside the tree this tool treats as read-only.
+printf '# user rules\n' > "$H/.claude/CLAUDE.md"
+git init -q "$H/.claude"
+OUT="$(run --roots "$H/.claude,$H" --only claudemd --include-repos --apply)"
+if ! has "$H/.claude/AGENTS.md" "$OUT" && [ ! -e "$H/.claude/AGENTS.md" ]; then
+  ok "a root that is itself an excluded tree is not scanned"
+else bad "proposed a symlink inside Claude Code's own config dir"; fi
+rm -rf "$H/.claude/.git" "$H/.claude/CLAUDE.md"
+
 # --- a lossy-encoding collision must not misfile memory ----------------------
 # `a_b` and `a/b` both encode to `a-b`. Guessing would write one repo's memory into
 # the other's .agents/rules/, so the tool must decline to resolve it.

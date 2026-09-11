@@ -57,6 +57,13 @@ finished one.
   files in `$GOPATH/pkg/mod`. Measured over one real `$HOME`, that run goes from 31
   proposals and 17 conflicts, 25 and 12 of them vendored, to 6 and 5, none vendored.
   Migrate suite 41 -> 44 checks.
+- **A root that is itself an excluded tree is no longer scanned** — found while measuring
+  the fix above. `walk_user_tree()` pruned excluded *children*, so `~/.claude`, a recorded
+  project on any machine where Claude Code has been run from the home directory and often
+  a git repository of its own, was walked as a root: `--include-repos` offered an
+  `AGENTS.md` symlink beside `~/.claude/CLAUDE.md`, inside the tree this tool treats as
+  read-only. The exclusion is tested on each `dirpath` now, not only on the names below
+  it. One more check, 45.
 
 ## 0.26.0
 
